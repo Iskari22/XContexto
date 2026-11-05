@@ -42,6 +42,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true # activa Pages (fuente: GitHub Actions) si aún no lo está
       - name: Preparar la web (sin las pruebas)
         run: rsync -a --exclude tests Web/ _site/
       - uses: actions/upload-pages-artifact@v3

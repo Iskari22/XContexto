@@ -234,9 +234,10 @@ function renderDraft(d, r) {
   ta.addEventListener("input", updateCount);
   updateCount();
 
+  let lastLearnedEdit = d.text;
   const finalText = () => {
     const t = ta.value.trim();
-    if (t !== d.text) learn("edited", { stance: d.stance, originalText: d.text, finalText: t });
+    if (t !== d.text && t !== lastLearnedEdit) { learn("edited", { stance: d.stance, originalText: d.text, finalText: t }); lastLearnedEdit = t; }
     return t;
   };
   const thumb = (kind, label, aria) => h("button", {

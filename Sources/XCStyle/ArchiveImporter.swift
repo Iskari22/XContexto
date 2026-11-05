@@ -17,7 +17,8 @@ public enum ArchiveImporter {
             let isReply = t["in_reply_to_status_id_str"]?.string != nil
             // Quita la mención inicial de las respuestas ("@fulano texto") para quedarnos con tu voz.
             let cleaned = full.replacingOccurrences(of: #"^(@\w+\s+)+"#, with: "", options: .regularExpression)
-            return StyleSample(text: OEmbedEntities.decode(cleaned), isReply: isReply, likes: likes, retweets: rts, lang: t["lang"]?.string)
+            return StyleSample(text: OEmbedEntities.decode(cleaned), isReply: isReply, likes: likes, retweets: rts, lang: t["lang"]?.string,
+                               replyToID: t["in_reply_to_status_id_str"]?.string, replyToHandle: t["in_reply_to_screen_name"]?.string)
         }
     }
 

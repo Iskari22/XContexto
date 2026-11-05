@@ -29,7 +29,7 @@ public actor XContextoEngine {
         self.spend = spend
     }
 
-    public func analyze(_ input: PostInput, force: Bool = false,
+    public func analyze(_ input: PostInput, force: Bool = false, styleOverride: StyleProfile? = nil, recordLearning: Bool = true,
                         progress: (@Sendable (AnalysisStage) -> Void)? = nil) async throws -> AnalysisResult {
         let start = Date()
         try await spend.checkBudget()
@@ -60,7 +60,8 @@ public actor XContextoEngine {
         }
 
         progress?(.drafting)
-        let style = await styleTask
+        let loadedStyle = await styleTask
+        let style = styleOverride ?? loadedStyle
         let prefs = await prefsTask
         let writer = self.writer
         let (drafts, u2) = try await withRecovery("drafts", fallbackModel: fallback) { m in
@@ -73,7 +74,7 @@ public actor XContextoEngine {
                                     usage: [u1, u2], generatedAt: Date(), durationSeconds: Date().timeIntervalSince(start))
         cache[post.id] = result
         await spend.add(result.totalCostUSD)
-        await learning.record(InteractionEvent(kind: .shown, postID: post.id, topic: report.topic))
+        if recordLearning { await learning.record(InteractionEvent(kind: .shown, postID: post.id, topic: report.topic)) }
         await DiagLog.shared.log(.info, "engine", String(format: "Análisis %@ en %.1fs, $%.4f", post.id, result.durationSeconds, result.totalCostUSD))
         progress?(.done)
         return result

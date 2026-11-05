@@ -146,3 +146,19 @@ struct DiagnosticsTests {
         #expect(abs(u.estimatedCostUSD - (4 + 2 + 0.05)) < 0.0001)
     }
 }
+
+@Suite("Calibración")
+struct CalibrationTests {
+    @Test func picksRealReplies() throws {
+        let js = #"""
+        window.YTD.tweets.part0 = [
+          {"tweet": {"full_text": "@ana Eso no es así: el PIB creció un 2,5% según el INE en 2024", "favorite_count": "5", "retweet_count": "1", "in_reply_to_status_id_str": "111", "in_reply_to_screen_name": "ana", "lang": "es"}},
+          {"tweet": {"full_text": "@ana ok", "favorite_count": "0", "retweet_count": "0", "in_reply_to_status_id_str": "112", "in_reply_to_screen_name": "ana", "lang": "es"}},
+          {"tweet": {"full_text": "Post propio sin respuesta a nadie, bastante largo para contar", "favorite_count": "9", "retweet_count": "0", "lang": "es"}}
+        ]
+        """#
+        let c = Calibrator.candidates(from: try ArchiveImporter.parseTweetsJS(Data(js.utf8)), limit: 10)
+        #expect(c.count == 1)
+        #expect(c[0].replyToID == "111" && c[0].replyToHandle == "ana")
+    }
+}

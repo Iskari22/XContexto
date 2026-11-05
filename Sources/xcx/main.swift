@@ -47,6 +47,26 @@ case "fetch":
         print("Wikipedia (\(KeywordExtractor.query(from: p.text))):"); wiki.forEach { print("  • \($0.title) — \($0.url)") }
     } catch { fail(error.localizedDescription) }
 
+case "calibrate":
+    // Calibra la app con tus respuestas reales del archivo de X.
+    guard args.count >= 2 else { fail("uso: xcx calibrate <tweets.js> [--n 60] [--budget 40] [--parallel 4]") }
+    do {
+        let samples = try ArchiveImporter.importFile(at: URL(fileURLWithPath: args[1]))
+        if StyleStore.load().sampleCount == 0 {
+            try StyleStore.save(StyleProfile.build(from: samples))
+            print("Perfil de estilo creado con \(samples.count) posts.")
+        }
+        let n = Int(arg("--n") ?? "") ?? 60
+        let budget = Double(arg("--budget") ?? "") ?? 40
+        let par = Int(arg("--parallel") ?? "") ?? 4
+        print(String(format: "Calibrando hasta %d respuestas, %d en paralelo, tope %.0f USD…", n, par, budget))
+        let r = try await Calibrator(engine: engine).run(samples: samples, limit: n, budgetUSD: budget, concurrency: par) { print($0) }
+        print(String(format: "\nCasos: %d (fallidos %d) · parecido de estilo medio: %.1f/10 · coste: %.2f USD",
+                     r.cases.count, r.failures, r.averageStyleScore, r.totalCostUSD))
+        print("Posturas en tus respuestas reales: " + r.stanceShare.map { String(format: "%@ %.0f%%", $0.key, $0.value * 100) }.joined(separator: ", "))
+        if !r.styleGuide.isEmpty { print("\nGUÍA DE ESTILO APRENDIDA (ya guardada en tu perfil):\n\(r.styleGuide)") }
+    } catch { fail(error.localizedDescription) }
+
 case "health":
     for h in await engine.healthCheck() {
         print("\(h.ok ? "✅" : "❌") \(h.name): \(h.detail)\(h.fix.map { " → \($0)" } ?? "")")

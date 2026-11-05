@@ -7,8 +7,13 @@ public struct StyleSample: Codable, Sendable, Hashable {
     public var likes: Int
     public var retweets: Int
     public var lang: String?
-    public init(text: String, isReply: Bool, likes: Int = 0, retweets: Int = 0, lang: String? = nil) {
+    /// Post al que respondías (para calibrar la app con tus respuestas reales).
+    public var replyToID: String?
+    public var replyToHandle: String?
+    public init(text: String, isReply: Bool, likes: Int = 0, retweets: Int = 0, lang: String? = nil,
+                replyToID: String? = nil, replyToHandle: String? = nil) {
         self.text = text; self.isReply = isReply; self.likes = likes; self.retweets = retweets; self.lang = lang
+        self.replyToID = replyToID; self.replyToHandle = replyToHandle
     }
 }
 
@@ -26,10 +31,12 @@ public struct StyleProfile: Codable, Sendable, Hashable {
     public var samples: [StyleSample]
     /// Notas que escribes tú (p. ej. "nunca uso emojis", "tuteo siempre").
     public var manualNotes: String
+    /// Guía de estilo aprendida al comparar borradores con tus respuestas reales (calibración).
+    public var learnedGuide: String?
 
     public static let empty = StyleProfile(sampleCount: 0, medianLength: 200, emojiRate: 0, hashtagRate: 0, questionRate: 0,
                                            exclamationRate: 0, linkRate: 0, startsLowercaseRate: 0, signaturePhrases: [],
-                                           samples: [], manualNotes: "")
+                                           samples: [], manualNotes: "", learnedGuide: nil)
 
     public static func build(from all: [StyleSample], manualNotes: String = "") -> StyleProfile {
         let s = all.filter { !$0.text.hasPrefix("RT @") && $0.text.count > 15 }
@@ -49,7 +56,8 @@ public struct StyleProfile: Codable, Sendable, Hashable {
             startsLowercaseRate: rate { $0.first?.isLowercase == true },
             signaturePhrases: signature(s.map(\.text)),
             samples: Array(best.prefix(300)),
-            manualNotes: manualNotes
+            manualNotes: manualNotes,
+            learnedGuide: nil
         )
     }
 
@@ -95,6 +103,7 @@ public struct StyleProfile: Codable, Sendable, Hashable {
             if !signaturePhrases.isEmpty { lines.append("Expresiones habituales: \(signaturePhrases.prefix(8).joined(separator: ", ")).") }
         }
         if !manualNotes.isEmpty { lines.append("Indicaciones del propio usuario: \(manualNotes)") }
+        if let g = learnedGuide, !g.isEmpty { lines.append("Guía de estilo aprendida de sus respuestas reales:\n\(g)") }
         return lines.joined(separator: "\n")
     }
 }

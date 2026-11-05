@@ -1,5 +1,5 @@
 // Service worker: guarda la app para abrirla sin conexión. NUNCA guarda llamadas a la API ni a Wikipedia.
-const VERSION = "xcx-v1";
+const VERSION = "xcx-v2";
 const SHELL = ["./", "index.html", "oembed.html", "css/app.css", "js/app.js", "js/core.js", "js/net.js", "js/prompts.js",
   "manifest.webmanifest", "icons/icon.svg", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png"];
 

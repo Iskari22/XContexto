@@ -20,14 +20,15 @@ La app **no puede publicar**: no tiene credenciales de X y su cortafuegos intern
 | `XCEngine` | Une todo: post → contexto → borradores → orden por tus preferencias |
 | `XCUI` | Interfaz SwiftUI común a macOS e iOS |
 | `Apps/` | App de macOS (ventana y barra de menú), app de iOS y extensión de Compartir |
-| `BrowserExtension/chrome` | Botón ⓧ en cada post de x.com; abre la versión web o la app del Mac ([cómo instalarla](BrowserExtension/chrome/README.md)) |
+| `BrowserExtension/chrome` | Botón ⓧ en cada post de x.com; abre la versión web o la app del Mac. ⌥ + clic en un post lo analiza en la app de Claude, sin API ([cómo instalarla](BrowserExtension/chrome/README.md)) |
 | `BrowserExtension/safari` | Lo mismo para Safari en macOS e iOS; abre la app o la versión web ([cómo instalarla](BrowserExtension/safari/README.md)) |
 | `Web/` | Versión web (PWA) para el iPhone o cualquier navegador, con la misma lógica y los mismos prompts ([detalles](Web/README.md)) |
 
 ## Versión web (iPhone sin Xcode)
 
 `Web/` es una PWA sin dependencias: pega la URL o el texto de un post y obtienes el mismo contexto y los mismos 3 borradores.
-Se publica sola en GitHub Pages al fusionar en `main` (activa una vez *Settings → Pages → Source: GitHub Actions*).
+Se publica sola en la rama `gh-pages` al fusionar en `main` (activa una vez *Settings → Pages → Deploy from a branch → `gh-pages`*).
+El botón **Con Claude** copia el post con las instrucciones y abre la app de Claude: usa tu suscripción, sin API.
 En el iPhone: ábrela en Safari → Compartir → *Añadir a pantalla de inicio*. Tu clave se queda en tu navegador.
 
 ## Uso rápido

@@ -46,15 +46,25 @@
     </details>
     <div class="actions">
       <button id="btn-paste" type="button" class="secondary">Pegar</button>
+      <button id="btn-claude" type="button" class="secondary" title="Copia el post con las instrucciones y abre la app de Claude. Usa tu suscripción, no la API.">Con Claude</button>
       <button id="btn-analyze" type="submit" class="primary">Analizar</button>
     </div>
-    <p class="hint" id="cost-hint">Cada análisis cuesta unos céntimos de tus créditos de la API.</p>
+    <p class="hint" id="cost-hint">«Analizar» usa tus créditos de la API (unos céntimos). «Con Claude» lo hace en la app de Claude con tu suscripción, sin coste extra.</p>
   </form>
 
   <section id="status" class="card status" hidden aria-live="polite">
     <div class="spinner" aria-hidden="true"></div>
     <p id="status-text">Leyendo el post…</p>
     <button id="btn-cancel" type="button" class="ghost">Cancelar</button>
+  </section>
+
+  <section id="claude-handoff" class="card notice" hidden aria-live="polite">
+    <p id="claude-handoff-text"></p>
+    <div class="actions wrap">
+      <button id="btn-claude-app" type="button" class="primary">Abrir Claude (app)</button>
+      <button id="btn-claude-web" type="button" class="secondary">Abrir en claude.ai</button>
+      <button id="btn-claude-copy" type="button" class="ghost">Copiar otra vez</button>
+    </div>
   </section>
 
   <section id="error" class="card error" hidden role="alert">

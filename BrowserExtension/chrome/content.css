@@ -5,3 +5,9 @@
   font: 600 13px -apple-system, system-ui, sans-serif; cursor: pointer;
 }
 .xcx-btn:hover { background: rgba(29, 155, 240, .12); }
+.xcx-toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 2147483647;
+  max-width: min(520px, calc(100vw - 32px)); padding: 10px 16px; border-radius: 12px;
+  background: rgb(15, 20, 25); color: #fff; box-shadow: 0 4px 18px rgba(0, 0, 0, .3);
+  font: 500 14px/1.35 -apple-system, system-ui, sans-serif;
+}

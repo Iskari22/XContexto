@@ -8,7 +8,7 @@
 </head>
 <body>
 <h1>XContexto</h1>
-<p class="hint">Pulsa el botón ⓧ de un post en x.com para ver su contexto y 3 borradores.</p>
+<p class="hint">Pulsa el botón ⓧ de un post en x.com para ver su contexto y 3 borradores, o haz ⌥ + clic en el post para hacerlo en Claude.</p>
 <fieldset>
   <legend>Abrir en</legend>
   <label><input type="radio" name="target" value="web"> La versión web (recomendado)</label>
@@ -16,6 +16,15 @@
 </fieldset>
 <label for="webURL" class="block">Dirección de la versión web</label>
 <input id="webURL" type="url" placeholder="https://iskari22.github.io/XContexto/" autocomplete="off" spellcheck="false">
+<fieldset>
+  <legend>⌥ + clic en un post (Alt + clic en Windows)</legend>
+  <label><input type="radio" name="altClick" value="app"> Abrir la app de Claude (escritorio)</label>
+  <label><input type="radio" name="altClick" value="web"> Abrir Claude en el navegador (claude.ai)</label>
+  <label><input type="radio" name="altClick" value="off"> Desactivado</label>
+</fieldset>
+<p class="hint">Copia el post con las instrucciones de análisis y abre Claude. Usa tu suscripción de Claude, no la API.</p>
+<label for="styleNotes" class="block">Tu estilo para los borradores en Claude (opcional)</label>
+<textarea id="styleNotes" rows="3" placeholder="Ej.: tuteo, sin emojis, frases cortas, cito datos con fuente"></textarea>
 <p class="hint" id="saved" hidden>Guardado</p>
 <p class="hint">La extensión solo lee el post que eliges. No puede publicar ni escribir en X.</p>
 <script src="popup.js"></script>

@@ -144,7 +144,29 @@ assert.equal(apiCalls.length, 4);
 assert.ok(apiCalls[2].body.messages[0].content.includes("La OTAN despliega tropas en Polonia"));
 assert.equal(new URL(page.url()).search, "", "el texto no se queda en la barra de direcciones");
 
-// 7) Ajustes en pantalla de móvil.
+// 7) «Con Claude»: copia el post con las instrucciones y abre la app de Claude (sin usar la API).
+await page.goto(base);
+await page.evaluate(() => {
+  window.__schemes = [];
+  const orig = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function () { if (this.href.startsWith("claude:")) window.__schemes.push(this.href); else orig.call(this); };
+});
+const callsBefore = apiCalls.length;
+await page.fill("#post-input", "Polonia gasta el 4% del PIB en defensa https://x.com/otro/status/77");
+await page.click("#btn-claude");
+await page.waitForSelector("#claude-handoff:not([hidden])");
+const handed = await page.evaluate(() => navigator.clipboard.readText());
+assert.ok(handed.includes("Polonia gasta el 4% del PIB en defensa"));
+assert.ok(handed.includes('url="https://x.com/otro/status/77"'));
+assert.ok(handed.includes("Crítico · refuta"));
+const schemes = await page.evaluate(() => window.__schemes);
+assert.equal(schemes.length, 1);
+assert.ok(schemes[0].startsWith("claude://claude.ai/new?q="));
+assert.equal(new URL(schemes[0].replace("claude://", "https://")).searchParams.get("q"), handed);
+assert.equal(apiCalls.length, callsBefore, "no llama a la API");
+await shot("5-con-claude");
+
+// 8) Ajustes en pantalla de móvil.
 await page.click("#btn-settings");
 await shot("4-ajustes");
 const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
@@ -155,4 +177,4 @@ assert.deepEqual(errors.filter((e) => !/favicon/.test(e)), [], "sin errores en c
 
 await browser.close();
 server.close();
-console.log("✓ e2e: 7 pasos OK en iPhone 14 emulado");
+console.log("✓ e2e: 8 pasos OK en iPhone 14 emulado");

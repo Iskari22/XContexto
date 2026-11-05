@@ -1,9 +1,10 @@
 // Interfaz de XContexto (web). La lógica está en core.js; aquí solo hay DOM y almacenamiento local.
 import {
   DEFAULT_CONFIG, STANCE_LABEL, VERDICT_LABEL, XCError, analyze, regenerateDrafts, composeURL, cost, makePost,
-  parsePostURL, findPostURL, xLength, recordEvent, emptyPrefs, EMPTY_STYLE, buildStyle, parseTweetsJS, trustedDomains,
+  parsePostURL, findPostURL, xLength, recordEvent, emptyPrefs, EMPTY_STYLE, buildStyle, parseTweetsJS, trustedDomains, exemplars,
 } from "./core.js";
 import { wikipediaArticles, fetchOEmbed } from "./net.js";
+import { claudeChatPrompt, claudeLinks, localDate } from "./prompts.js";
 
 // ---------------------------------------------------------------- Almacenamiento (solo este navegador)
 
@@ -79,7 +80,7 @@ let controller = null;
 const STAGES = { fetching: "Leyendo el post…", researching: "Buscando contexto en fuentes reputadas…", drafting: "Escribiendo 3 borradores con tu estilo…" };
 
 function show(section) {
-  for (const id of ["status", "error", "result"]) $(id).hidden = id !== section;
+  for (const id of ["status", "error", "result", "claude-handoff"]) $(id).hidden = id !== section;
 }
 function setStatus(stage) { show("status"); $("status-text").textContent = STAGES[stage] ?? stage; }
 
@@ -147,6 +148,38 @@ async function runAnalysis() {
   } finally {
     btn.disabled = false;
     controller = null;
+  }
+}
+
+// ---------------------------------------------------------------- Con Claude (sin API)
+
+let handoff = null;
+
+/** Abre un esquema propio (claude://) sin salir de la página. */
+function openScheme(href) {
+  const a = h("a", { href, rel: "noopener" });
+  document.body.append(a); a.click(); a.remove();
+}
+
+async function runClaudeHandoff() {
+  const btn = $("btn-claude"); btn.disabled = true;
+  try {
+    const post = await readPost();
+    const st = style();
+    const examples = exemplars(st, post.text, 4).map((x) => x.text);
+    const styleNotes = [st.manualNotes, st.learnedGuide].filter(Boolean).join("\n");
+    const prompt = claudeChatPrompt(post, { today: localDate(), styleNotes, examples });
+    handoff = { prompt, links: claudeLinks(prompt) };
+    const copied = await copyText(prompt);
+    show("claude-handoff");
+    $("claude-handoff-text").textContent = copied
+      ? "Copiado. Abriendo la app de Claude… Si el texto no aparece ya escrito, pega con ⌘V (Ctrl+V en Windows) y pulsa Intro."
+      : "Pulsa «Copiar otra vez» y luego abre Claude y pega el texto.";
+    openScheme(handoff.links.app);
+  } catch (e) {
+    showError(e);
+  } finally {
+    btn.disabled = false;
   }
 }
 
@@ -345,6 +378,10 @@ function openHistory() {
 function wire() {
   $("input-form").addEventListener("submit", (e) => { e.preventDefault(); runAnalysis(); });
   $("btn-cancel").addEventListener("click", () => controller?.abort());
+  $("btn-claude").addEventListener("click", runClaudeHandoff);
+  $("btn-claude-app").addEventListener("click", () => handoff && openScheme(handoff.links.app));
+  $("btn-claude-web").addEventListener("click", () => handoff && window.open(handoff.links.web, "_blank", "noopener,noreferrer"));
+  $("btn-claude-copy").addEventListener("click", async () => { if (handoff && await copyText(handoff.prompt)) toast("Copiado: pégalo en Claude"); });
   $("btn-regen").addEventListener("click", runRegenerate);
   $("btn-paste").addEventListener("click", async () => {
     try { $("post-input").value = await navigator.clipboard.readText(); } catch { toast("Mantén pulsado el campo y elige Pegar"); $("post-input").focus(); }

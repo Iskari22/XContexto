@@ -340,3 +340,35 @@ describe("Aprendizaje (= LearningTests en Swift)", () => {
     assert.deepEqual(a.totals, {});
   });
 });
+
+describe("Con Claude (sin API)", async () => {
+  const P = await import("../js/prompts.js");
+  const post = { authorName: 'Ana "Datos"', handle: "anadatos", url: "https://x.com/anadatos/status/1", text: "El paro bajó al 2%" };
+
+  test("el texto lleva el post, la fecha, las 3 posturas y las reglas de no publicar ni inventar", () => {
+    const t = P.claudeChatPrompt(post, { today: "2026-11-05" });
+    assert.match(t, /<post autor="Ana 'Datos' \(@anadatos\)" url="https:\/\/x\.com\/anadatos\/status\/1">\nEl paro bajó al 2%\n<\/post>$/);
+    assert.ok(t.includes("Hoy es 2026-11-05"));
+    for (const s of ["Neutro · amplía", "A favor · refuerza", "Crítico · refuta"]) assert.ok(t.includes(s), s);
+    assert.ok(t.includes("No publiques nada"));
+    assert.ok(t.includes("no inventes cifras"));
+    assert.ok(!t.includes("<mi_estilo>"), "sin estilo no hay bloque de estilo");
+  });
+
+  test("añade tu estilo y ejemplos si los hay", () => {
+    const t = P.claudeChatPrompt(post, { today: "2026-11-05", styleNotes: "tuteo, sin emojis", examples: ["Mi post 1"] });
+    assert.match(t, /<mi_estilo>\ntuteo, sin emojis\n\nEjemplos de posts míos:\n- Mi post 1\n<\/mi_estilo>/);
+  });
+
+  test("abre la app de escritorio (claude://) o claude.ai con el texto; si es muy largo, sin texto (se pega)", () => {
+    const l = P.claudeLinks("hola & adiós");
+    assert.equal(l.app, "claude://claude.ai/new?q=hola%20%26%20adi%C3%B3s");
+    assert.equal(new URL(l.web).searchParams.get("q"), "hola & adiós");
+    assert.equal(new URL(l.web).origin, "https://claude.ai");
+    assert.deepEqual(P.claudeLinks("x".repeat(7000)), { app: "claude://claude.ai/new", web: "https://claude.ai/new" });
+  });
+
+  test("fecha local AAAA-MM-DD", () => {
+    assert.equal(P.localDate(new Date(2026, 0, 9)), "2026-01-09");
+  });
+});

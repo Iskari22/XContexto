@@ -154,6 +154,9 @@ describe("Investigación", () => {
     assert.ok(r.sources.some((s) => s.url.includes("ine.es")));
     assert.ok(!r.sources.some((s) => s.url.includes("inventada")));
     assert.ok(r.sources.some((s) => s.kind === "wikipedia"));
+    // El dato apoyado solo en la URL inventada desaparece.
+    assert.equal(r.keyFacts.length, 1);
+    assert.ok(!r.keyFacts.some((f) => f.text.includes("inventado")));
   });
 
   test("un 'false' sin fuente verificada se rebaja a 'no verificable'", () => {

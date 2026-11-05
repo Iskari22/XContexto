@@ -99,7 +99,11 @@ public struct ResearchService: Sendable {
 
         let facts = (json["key_facts"]?.array ?? []).compactMap { f -> Fact? in
             guard let t = f["text"]?.string else { return nil }
-            return Fact(text: t, sources: refs(f["source_urls"]))
+            let cited = (f["source_urls"]?.array ?? []).compactMap { $0.string }.count
+            let srcs = refs(f["source_urls"])
+            // Un dato cuyas fuentes citadas eran todas inventadas se descarta: no llega a los borradores.
+            if cited > 0 && srcs.isEmpty { return nil }
+            return Fact(text: t, sources: srcs)
         }
         let claims = (json["claims"]?.array ?? []).compactMap { c -> ClaimCheck? in
             guard let t = c["claim"]?.string else { return nil }

@@ -50,7 +50,7 @@ function h(tag, attrs = {}, ...kids) {
     else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
     else el.setAttribute(k, v === true ? "" : v);
   }
-  for (const c of kids.flat()) if (c != null && c !== false) el.append(c instanceof Node ? c : String(c));
+  for (const c of kids.flat(Infinity)) if (c != null && c !== false) el.append(c instanceof Node ? c : String(c));
   return el;
 }
 const safeHref = (u) => (/^https?:\/\//i.test(u) ? u : "#");
@@ -200,11 +200,11 @@ function render(r) {
   const rep = r.report;
   const refs = (ix) => h("span", { class: "refs" }, ix.map((i) => rep.sources[i]).filter(Boolean).map((s, n) => link(s.url, s.publisher || String(n + 1))));
   const ctx = $("context-card");
-  ctx.replaceChildren(
+  ctx.replaceChildren(...[
     h("h2", {}, "Contexto"),
     rep.summary ? h("p", {}, rep.summary) : null,
     rep.background ? h("p", { class: "muted" }, rep.background) : null,
-    rep.keyFacts.length ? [h("h3", {}, "Datos clave"), h("ul", { class: "facts" }, rep.keyFacts.map((f) => h("li", {}, f.text, " ", refs(f.sources))))] : null,
+    rep.keyFacts.length ? [h("h3", {}, "Datos clave"), h("ul", { class: "facts" }, rep.keyFacts.map((f) => h("li", {}, f.text, " ", f.sources.length ? refs(f.sources) : h("span", { class: "badge" }, "sin fuente"))))] : null,
     rep.claims.length ? [h("h3", {}, "Afirmaciones del post"), h("ul", { class: "claims" }, rep.claims.map((c) =>
       h("li", {}, h("span", { class: `verdict v-${c.verdict}` }, VERDICT_LABEL[c.verdict]), c.claim, " ", refs(c.sources),
         c.explanation ? h("span", { class: "expl" }, c.explanation) : null)))] : null,
@@ -212,7 +212,7 @@ function render(r) {
     rep.sources.length ? [h("h3", {}, `Fuentes (${rep.sources.length})`), h("ul", { class: "sources" }, rep.sources.map((s) =>
       h("li", {}, h("span", { class: "kind" }, kindLabel(s.kind)), link(s.url, s.title || s.url), h("span", { class: "muted" }, ` · ${s.publisher}`))))] : null,
     rep.droppedUnverifiedSources ? h("p", { class: "warn-line" }, `Descartadas ${rep.droppedUnverifiedSources} URL que no aparecían en ninguna búsqueda real.`) : null,
-  );
+  ].flat(Infinity).filter(Boolean));
   for (const a of ctx.querySelectorAll("a")) a.addEventListener("click", () => learn("viewedSources"));
 
   $("result-meta").textContent = `${r.usage.map((u) => u.model).filter((v, i, a) => a.indexOf(v) === i).join(" + ")} · ` +

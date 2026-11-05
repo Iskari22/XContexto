@@ -26,6 +26,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
@@ -90,6 +91,8 @@ details summary { cursor: pointer; color: var(--muted); margin-top: 8px; font-si
 .badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); white-space: nowrap; }
 .badge.fav { color: var(--accent); }
 .draft textarea { margin-top: 8px; background: var(--card); }
+.draft .meta > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.draft .meta > span:last-child { flex: none; }
 .draft .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
 .draft .meta .over { color: var(--bad); font-weight: 600; }
 .draft .rationale { font-size: 0.85rem; color: var(--muted); margin: 6px 0 0; }

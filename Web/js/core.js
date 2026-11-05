@@ -432,7 +432,12 @@ export function parseResearch(msg, articles) {
   });
 
   const arr = (v) => (Array.isArray(v) ? v : []);
-  const keyFacts = arr(json.key_facts).filter((f) => typeof f?.text === "string").map((f) => ({ text: f.text, sources: refs(f.source_urls) }));
+  // Un dato cuyas fuentes citadas eran todas inventadas se descarta: no se muestra ni llega a los borradores.
+  const keyFacts = arr(json.key_facts).filter((f) => typeof f?.text === "string").flatMap((f) => {
+    const cited = arr(f.source_urls).filter((x) => typeof x === "string").length;
+    const sources = refs(f.source_urls);
+    return cited > 0 && sources.length === 0 ? [] : [{ text: f.text, sources }];
+  });
   const claims = arr(json.claims).filter((c) => typeof c?.claim === "string").map((c) => ({
     claim: c.claim,
     verdict: Object.hasOwn(VERDICT_LABEL, c.verdict) ? c.verdict : "unverifiable",

@@ -9,13 +9,22 @@ public enum AppStorage {
         let base: URL
         if let env = ProcessInfo.processInfo.environment["XCONTEXTO_DATA_DIR"] {
             base = URL(fileURLWithPath: env)
-        } else if let group = fm.containerURL(forSecurityApplicationGroupIdentifier: appGroup) {
+        } else if let group = sharedGroupURL(fm) {
             base = group
         } else {
             base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("XContexto")
         }
         try? fm.createDirectory(at: base, withIntermediateDirectories: true)
         return base
+    }
+
+    /// En iOS la app y la extensión de Compartir comparten datos vía App Group. En macOS no hace falta.
+    static func sharedGroupURL(_ fm: FileManager) -> URL? {
+        #if os(iOS)
+        return fm.containerURL(forSecurityApplicationGroupIdentifier: appGroup)
+        #else
+        return nil
+        #endif
     }
 
     public static func file(_ name: String) -> URL { directory().appendingPathComponent(name) }

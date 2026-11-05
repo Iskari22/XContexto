@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "XContexto",
+  "version": "0.1.0",
+  "description": "Añade un botón a cada post de X para abrir su contexto ampliado y 3 borradores en la app XContexto.",
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": []
+}

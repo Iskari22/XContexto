@@ -165,7 +165,7 @@ public actor LearningStore {
 /// Registro de lo que llevas gastado de tus créditos de la API, con límite opcional.
 public actor SpendTracker {
     public static let shared = SpendTracker()
-    public struct State: Codable, Sendable { public var totalUSD: Double = 0; public var analyses: Int = 0; public var limitUSD: Double = 100 }
+    public struct State: Codable, Sendable { public var totalUSD: Double = 0; public var analyses: Int = 0; public var limitUSD: Double = 100; public init() {} }
     private var state: State
     private let url: URL
 

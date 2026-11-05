@@ -83,6 +83,7 @@ public actor ClaudeClient {
         case 500, 502, 503, 504, 529: throw XCError.overloaded(status: resp.statusCode)
         default:
             let msg = json["error"]?["message"]?.string ?? String(data: data.prefix(300), encoding: .utf8) ?? ""
+            if msg.lowercased().contains("credit balance") { throw XCError.noCredits }
             throw XCError.api(status: resp.statusCode, message: msg)
         }
 

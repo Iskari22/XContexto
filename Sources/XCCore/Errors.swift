@@ -6,6 +6,7 @@ public enum XCError: Error, Sendable, Equatable, LocalizedError {
     case postUnavailable(String)
     case network(String)
     case unauthorized
+    case noCredits
     case rateLimited(retryAfter: Double?)
     case overloaded(status: Int)
     case api(status: Int, message: String)
@@ -22,6 +23,7 @@ public enum XCError: Error, Sendable, Equatable, LocalizedError {
         case .postUnavailable(let s): return "No pude leer el post (\(s)). Prueba a copiar el texto."
         case .network(let s): return "Error de red: \(s)"
         case .unauthorized: return "La clave de la API no es válida o se revocó."
+        case .noCredits: return "La cuenta de esta clave no tiene saldo. Revisa Billing en console.anthropic.com o usa una clave de la organización con créditos."
         case .rateLimited: return "Demasiadas peticiones seguidas. Reintentando en unos segundos."
         case .overloaded(let st): return "La API está saturada (\(st)). Reintentando."
         case .api(let st, let m): return "La API devolvió \(st): \(m)"

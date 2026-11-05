@@ -88,7 +88,7 @@ public enum Remedy: Sendable, Equatable {
             if attempt >= 2, let m = fallbackModel { return .switchModel(to: m) }
             return .retry(after: backoff)
         case .network, .truncated, .decoding: return attempt < 3 ? .retry(after: backoff) : .giveUp("Fallo persistente")
-        case .unauthorized, .missingAPIKey: return .askUserForKey
+        case .unauthorized, .missingAPIKey, .noCredits: return .askUserForKey
         case .postUnavailable, .invalidPostURL: return .askUserToPasteText
         default: return .giveUp(error.localizedDescription)
         }

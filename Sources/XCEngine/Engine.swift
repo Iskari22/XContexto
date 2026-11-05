@@ -51,7 +51,7 @@ public actor XContextoEngine {
             (report, u1) = try await withRecovery("research", fallbackModel: fallback) { m in
                 try await research.research(post, model: m)
             }
-        } catch let e as XCError where !(e == .unauthorized || e == .missingAPIKey) {
+        } catch let e as XCError where !(e == .unauthorized || e == .missingAPIKey || e == .noCredits) {
             // Arreglo automático: si la búsqueda web falla, seguimos solo con Wikipedia.
             await DiagLog.shared.log(.warning, "research", "Sin búsqueda web: \(e.localizedDescription)", remedy: Remedy.continueWithoutWebSearch.description)
             (report, u1) = try await withRecovery("research-wiki", fallbackModel: fallback) { m in

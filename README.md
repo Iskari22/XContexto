@@ -21,6 +21,14 @@ La app **no puede publicar**: no tiene credenciales de X y su cortafuegos intern
 | `XCUI` | Interfaz SwiftUI común a macOS e iOS |
 | `Apps/` | App de macOS (ventana y barra de menú), app de iOS y extensión de Compartir |
 | `BrowserExtension/chrome` | Botón ⓧ en cada post de x.com |
+| `BrowserExtension/safari` | Lo mismo para Safari en macOS e iOS; abre la app o la versión web ([cómo instalarla](BrowserExtension/safari/README.md)) |
+| `Web/` | Versión web (PWA) para el iPhone o cualquier navegador, con la misma lógica y los mismos prompts ([detalles](Web/README.md)) |
+
+## Versión web (iPhone sin Xcode)
+
+`Web/` es una PWA sin dependencias: pega la URL o el texto de un post y obtienes el mismo contexto y los mismos 3 borradores.
+Se publica sola en GitHub Pages al fusionar en `main` (activa una vez *Settings → Pages → Source: GitHub Actions*).
+En el iPhone: ábrela en Safari → Compartir → *Añadir a pantalla de inicio*. Tu clave se queda en tu navegador.
 
 ## Uso rápido
 
@@ -43,9 +51,17 @@ Extensión de Chrome: `chrome://extensions` → Modo de desarrollador → *Carga
 Cada análisis hace 2 llamadas (investigación con búsqueda web + borradores). La app estima el gasto, lo enseña en
 *Aprendizaje* y se para al llegar al límite (100 USD por defecto). La cifra real está en console.anthropic.com → Usage.
 
+## Pruebas
+
+```bash
+swift test          # motor Swift (en el Mac)
+npm test            # web: núcleo, seguridad y paridad de prompts con Swift
+npm run test:e2e    # web en un iPhone emulado y extensiones, con la API simulada (sin gasto)
+```
+
 ## Pendiente o con límites
 
-- Extensión de Safari: se puede generar a partir de la de Chrome con `xcrun safari-web-extension-converter`.
+- Extensión de Safari: el código está en `BrowserExtension/safari`; falta convertirla con Xcode en el Mac (ver su README).
 - Si X cambia el HTML de su web, el botón ⓧ puede dejar de aparecer (hay que ajustar los selectores de `content.js`).
 - Posts protegidos o borrados: oEmbed no los devuelve; la extensión envía el texto leído en pantalla, y en iOS puedes pegarlo.
 - App Groups y el Llavero compartido entre la app de iOS y su extensión necesitan firmar con tu equipo de Apple.

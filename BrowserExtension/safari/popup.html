@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="popup.css">
+<title>XContexto</title>
+</head>
+<body>
+<h1>XContexto</h1>
+<p class="hint">Pulsa el botón ⓧ de un post en x.com para ver su contexto y 3 borradores.</p>
+<fieldset>
+  <legend>Abrir en</legend>
+  <label><input type="radio" name="target" value="app"> La app XContexto (Mac / iPhone)</label>
+  <label><input type="radio" name="target" value="web"> La versión web</label>
+</fieldset>
+<label for="webURL" class="block">Dirección de la versión web</label>
+<input id="webURL" type="url" placeholder="https://usuario.github.io/XContexto/" autocomplete="off" spellcheck="false">
+<p class="hint" id="saved" hidden>Guardado</p>
+<p class="hint">La extensión solo lee el post que eliges. No puede publicar ni escribir en X.</p>
+<script src="popup.js"></script>
+</body>
+</html>

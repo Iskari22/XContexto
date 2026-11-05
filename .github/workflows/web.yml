@@ -1,0 +1,50 @@
+name: Web y extensiones
+
+on:
+  push:
+    branches: [main, "main-*"]
+    paths: ["Web/**", "BrowserExtension/**", "Sources/**", "package.json", ".github/workflows/web.yml"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pruebas unitarias, de seguridad y de paridad con Swift
+        run: npm test
+      - name: Pruebas de extremo a extremo (iPhone emulado, API simulada)
+        run: |
+          npm install --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+
+  # Publica Web/ en GitHub Pages al fusionar en main.
+  # Requiere activar Pages una vez: Settings → Pages → Source: GitHub Actions.
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Preparar la web (sin las pruebas)
+        run: rsync -a --exclude tests Web/ _site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

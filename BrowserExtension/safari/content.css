@@ -1,0 +1,7 @@
+.xcx-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; margin-left: 6px; border-radius: 999px;
+  border: 1px solid rgba(29, 155, 240, .5); background: transparent; color: rgb(29, 155, 240);
+  font: 600 13px -apple-system, system-ui, sans-serif; cursor: pointer;
+}
+.xcx-btn:hover { background: rgba(29, 155, 240, .12); }

@@ -1,0 +1,11 @@
+{
+  "name": "xcontexto",
+  "private": true,
+  "description": "Pruebas de la versión web y de las extensiones de XContexto (sin dependencias; e2e usa Playwright).",
+  "type": "module",
+  "scripts": {
+    "test": "node --test Web/tests/*.test.mjs",
+    "test:e2e": "node Web/tests/e2e.mjs && node BrowserExtension/tests/extension.e2e.mjs",
+    "serve": "python3 -m http.server 8080 --directory Web"
+  }
+}

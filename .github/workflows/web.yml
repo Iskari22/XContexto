@@ -26,28 +26,27 @@ jobs:
           npx playwright install --with-deps chromium
           npm run test:e2e
 
-  # Publica Web/ en GitHub Pages al fusionar en main.
-  # Requiere activar Pages una vez: Settings → Pages → Source: GitHub Actions.
+  # Publica Web/ (sin las pruebas) en la rama gh-pages al fusionar en main.
+  # Pages se sirve desde esa rama: Settings → Pages → Deploy from a branch → gh-pages, / (root).
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      contents: write
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true # activa Pages (fuente: GitHub Actions) si aún no lo está
       - name: Preparar la web (sin las pruebas)
-        run: rsync -a --exclude tests Web/ _site/
-      - uses: actions/upload-pages-artifact@v3
+        run: |
+          rsync -a --exclude tests Web/ _site/
+          touch _site/.nojekyll
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          path: _site
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./_site
+          force_orphan: true
+          commit_message: "Publicar web desde ${{ github.sha }}"

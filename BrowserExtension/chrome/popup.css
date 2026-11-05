@@ -1,0 +1,10 @@
+:root { color-scheme: light dark; --bg: #fff; --text: #0f1419; --muted: #5b6670; --line: #e3e5e8; }
+@media (prefers-color-scheme: dark) { :root { --bg: #182028; --text: #e8eaed; --muted: #9aa4ae; --line: #2b3640; } }
+body { margin: 0; padding: 14px 16px; min-width: 280px; background: var(--bg); color: var(--text); font: 14px/1.45 -apple-system, system-ui, sans-serif; }
+h1 { font-size: 16px; margin: 0 0 4px; }
+.hint { color: var(--muted); font-size: 12px; margin: 6px 0; }
+fieldset { border: 1px solid var(--line); border-radius: 10px; margin: 10px 0; padding: 6px 10px 8px; }
+legend { font-weight: 600; padding: 0 4px; }
+fieldset label { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+label.block { display: block; font-weight: 600; margin: 8px 0 4px; }
+input[type="url"] { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--text); }

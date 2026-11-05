@@ -2,8 +2,8 @@
 
 Añade un botón **ⓧ** a cada post de x.com. Al pulsarlo, abre ese post en XContexto:
 
-- en la **app** de tu Mac o iPhone (`xcontexto://analyze?…`), o
-- en la **versión web** (PWA), si lo eliges en el menú de la extensión.
+- por defecto, en la **versión web** (`https://iskari22.github.io/XContexto/`), o
+- en la **app** de tu Mac o iPhone (`xcontexto://analyze?…`), si lo eliges en el menú de la extensión.
 
 Solo lee el post que eliges (texto, autor y enlace). No hace peticiones de red y no puede publicar ni escribir en X.
 Su único permiso es `storage`, para recordar a dónde abrir.
@@ -31,10 +31,9 @@ Después, en Xcode:
 Sin cuenta de pago de Apple Developer, la app de iOS instalada desde Xcode caduca a los 7 días (hay que volver a
 ejecutarla desde Xcode). En el Mac no caduca.
 
-## Versión web en lugar de la app
+## App en lugar de la versión web
 
-Pulsa el icono de la extensión en la barra de Safari → «La versión web» → escribe la dirección de tu web
-(p. ej. `https://iskari22.github.io/XContexto/`).
+Pulsa el icono de la extensión en la barra de Safari → «La app XContexto (Mac / iPhone)».
 
 ## Pruebas
 

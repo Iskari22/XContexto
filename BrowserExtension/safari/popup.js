@@ -2,7 +2,7 @@ const api = globalThis.browser ?? globalThis.chrome;
 const $ = (s) => document.querySelector(s);
 const saved = $("#saved");
 
-api.storage.local.get({ target: "app", webURL: "" }).then((s) => {
+api.storage.local.get({ target: "web", webURL: "https://iskari22.github.io/XContexto/" }).then((s) => {
   const radio = document.querySelector(`input[name=target][value="${s.target}"]`);
   if (radio) radio.checked = true;
   $("#webURL").value = s.webURL;

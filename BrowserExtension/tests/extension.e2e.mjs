@@ -26,7 +26,9 @@ async function run(kind, storage) {
   const page = await ctx.newPage();
   const opened = [];
   await ctx.route("https://x.com/**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: FAKE_X }));
-  await ctx.route("https://xcx.example/**", (r) => { opened.push(r.request().url()); r.fulfill({ status: 200, body: "ok" }); });
+  for (const host of ["https://xcx.example/**", "https://iskari22.github.io/**"]) {
+    await ctx.route(host, (r) => { opened.push(r.request().url()); r.fulfill({ status: 200, body: "ok" }); });
+  }
   await page.goto("https://x.com/home");
   // Simula la API de extensiones y recoge los enlaces xcontexto:// sin navegar.
   await page.evaluate((st) => {
@@ -51,28 +53,72 @@ async function run(kind, storage) {
 }
 
 for (const kind of ["safari", "chrome"]) {
-  const { links } = await run(kind, {});
+  // Por defecto: la versión web publicada.
+  const def = await run(kind, {});
+  assert.equal(def.opened.length, 1, kind);
+  const d = new URL(def.opened[0]);
+  assert.equal(d.origin + d.pathname, "https://iskari22.github.io/XContexto/");
+  assert.equal(d.searchParams.get("url"), "https://x.com/anadatos/status/1855000000000000001");
+  assert.equal(d.searchParams.get("text"), "El paro bajó al 2% en 2025 & es récord");
+  assert.equal(d.searchParams.get("handle"), "anadatos");
+  assert.equal(d.searchParams.get("author"), "Ana Datos");
+  console.log(`✓ ${kind}: abre la versión web con el post`);
+
+  // Opción: la app del Mac/iPhone.
+  const { links } = await run(kind, { target: "app" });
   assert.equal(links.length, 1, kind);
   const u = new URL(links[0]);
   assert.equal(u.protocol + u.host, "xcontexto:analyze");
-  assert.equal(u.searchParams.get("url"), "https://x.com/anadatos/status/1855000000000000001");
   assert.equal(u.searchParams.get("text"), "El paro bajó al 2% en 2025 & es récord");
-  assert.equal(u.searchParams.get("handle"), "anadatos");
-  assert.equal(u.searchParams.get("author"), "Ana Datos");
   console.log(`✓ ${kind}: abre la app con el post`);
+
+  // Opción: otra dirección web.
+  const { opened } = await run(kind, { target: "web", webURL: "https://xcx.example/XContexto/?viejo=1" });
+  assert.equal(new URL(opened[0]).origin + new URL(opened[0]).pathname, "https://xcx.example/XContexto/");
+  console.log(`✓ ${kind}: respeta otra dirección web`);
 }
 
-const { opened } = await run("safari", { target: "web", webURL: "https://xcx.example/XContexto/" });
-assert.equal(opened.length, 1);
-const w = new URL(opened[0]);
-assert.equal(w.origin + w.pathname, "https://xcx.example/XContexto/");
-assert.equal(w.searchParams.get("text"), "El paro bajó al 2% en 2025 & es récord");
-console.log("✓ safari: abre la versión web con el post");
+// Chrome y Safari comparten el mismo código (solo cambia el manifiesto).
+for (const f of ["content.js", "content.css", "popup.html", "popup.css", "popup.js", "_locales/es/messages.json"]) {
+  assert.equal(readFileSync(dir + "chrome/" + f, "utf8"), readFileSync(dir + "safari/" + f, "utf8"), `${f} distinto entre Chrome y Safari`);
+}
+console.log("✓ chrome y safari: mismo código");
 
-const manifest = JSON.parse(readFileSync(dir + "safari/manifest.json", "utf8"));
-assert.deepEqual(manifest.permissions, ["storage"], "sin permisos de red ni de pestañas");
-assert.ok(!("host_permissions" in manifest));
-for (const s of Object.values(manifest.icons)) readFileSync(dir + "safari/" + s);
-console.log("✓ safari: manifiesto con permisos mínimos");
+for (const kind of ["safari", "chrome"]) {
+  const manifest = JSON.parse(readFileSync(dir + kind + "/manifest.json", "utf8"));
+  assert.equal(manifest.manifest_version, 3);
+  assert.deepEqual(manifest.permissions, ["storage"], "sin permisos de red ni de pestañas");
+  assert.ok(!("host_permissions" in manifest) && !("background" in manifest));
+  for (const s of [...Object.values(manifest.icons), ...Object.values(manifest.action.default_icon)]) readFileSync(dir + kind + "/" + s);
+  readFileSync(dir + kind + "/" + manifest.action.default_popup);
+  console.log(`✓ ${kind}: manifiesto con permisos mínimos`);
+}
+
+// El menú de la extensión guarda la elección.
+{
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await ctx.route("https://ext.local/**", (r) => {
+    const f = new URL(r.request().url()).pathname.slice(1) || "popup.html";
+    r.fulfill({ status: 200, contentType: f.endsWith(".js") ? "text/javascript" : f.endsWith(".css") ? "text/css" : "text/html", body: readFileSync(dir + "chrome/" + f) });
+  });
+  await page.addInitScript(() => {
+    const data = {};
+    window.chrome = { storage: { local: { get: async (d) => ({ ...d, ...data }), set: async (v) => Object.assign(data, v) } } };
+    window.__data = data;
+  });
+  await page.goto("https://ext.local/popup.html");
+  await page.waitForFunction(() => document.querySelector("#webURL").value !== "");
+  assert.equal(await page.inputValue("#webURL"), "https://iskari22.github.io/XContexto/");
+  assert.equal(await page.isChecked("input[value=web]"), true);
+  await page.check("input[value=app]");
+  await page.waitForFunction(() => window.__data.target === "app");
+  await page.check("input[value=web]");
+  await page.fill("#webURL", "http://inseguro.example/");
+  await page.dispatchEvent("#webURL", "change");
+  assert.match(await page.textContent("#saved"), /https/);
+  await ctx.close();
+  console.log("✓ menú: guarda la elección y rechaza direcciones sin https");
+}
 
 await browser.close();

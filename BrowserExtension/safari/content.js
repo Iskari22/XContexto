@@ -1,12 +1,14 @@
-// XContexto para Safari (macOS e iOS): solo LEE el post (texto, autor, enlace) y lo abre en XContexto.
+// XContexto para Chrome y Safari (mismo fichero en las dos extensiones; una prueba lo exige).
+// Solo LEE el post (texto, autor, enlace) y lo abre en XContexto.
 // No hace peticiones de red y no puede escribir ni publicar en X. El único permiso es "storage" (tus ajustes).
 (() => {
   const api = globalThis.browser ?? globalThis.chrome;
   const MARK = "data-xcx";
   const MAX_TEXT = 4000;
-  // Destino por defecto: la app del Mac/iPhone (xcontexto://). En Ajustes de la extensión se puede elegir la web.
-  let settings = { target: "app", webURL: "" };
-  api?.storage?.local.get({ target: "app", webURL: "" }).then((s) => { settings = s; }).catch(() => {});
+  // Destino por defecto: la versión web. En el menú de la extensión se puede elegir la app del Mac/iPhone.
+  const DEFAULTS = { target: "web", webURL: "https://iskari22.github.io/XContexto/" };
+  let settings = { ...DEFAULTS };
+  api?.storage?.local.get(DEFAULTS).then((s) => { settings = s; }).catch(() => {});
   api?.storage?.onChanged?.addListener((ch) => { for (const k in ch) settings[k] = ch[k].newValue; });
 
   function postInfo(article) {

@@ -65,6 +65,15 @@ struct PostTests {
         #expect(q.contains("OTAN") && q.contains("Polonia") && q.contains("Vilna"))
     }
 
+    @Test func stripsLeadingMentionsFromDrafts() {
+        #expect(DraftWriter.stripLeadingMentions("@ana @luis Los datos dicen otra cosa") == "Los datos dicen otra cosa")
+        #expect(DraftWriter.stripLeadingMentions("Según @INE_es el paro baja") == "Según @INE_es el paro baja")
+    }
+
+    @Test func normalizesURLsForVerification() {
+        #expect(ResearchService.normalize("https://www.ElPais.com/a/b/?utm=1#x") == "elpais.com/a/b")
+    }
+
     @Test func extractsJSONFromText() throws {
         let j = try JSONExtractor.extract("Aquí tienes:\n<json>{\"topic\": \"x\"}</json>")
         #expect(j["topic"]?.string == "x")

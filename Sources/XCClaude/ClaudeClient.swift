@@ -56,13 +56,44 @@ public actor ClaudeClient {
     }
 
     /// Envía una petición a /v1/messages. `body` no lleva `model`: se añade aquí.
+    /// Si la búsqueda web pausa el turno (`pause_turn`), lo continúa hasta 3 veces y suma el uso.
     public func send(_ body: [String: JSONValue], model: String? = nil) async throws -> ClaudeMessage {
         var full = body
         let usedModel = model ?? config.model
         full["model"] = .string(usedModel)
         // Si el filtro de seguridad declina, la API reintenta sola con el modelo de respaldo recomendado.
         full["fallbacks"] = "default"
+        let originalMessages = body["messages"]?.array ?? []
 
+        var content: [JSONValue] = []
+        var usage = TokenUsage(model: usedModel)
+        for _ in 0..<4 {
+            let json = try await post(full)
+            let u = json["usage"]
+            usage.model = json["model"]?.string ?? usage.model
+            usage.inputTokens += u?["input_tokens"]?.int ?? 0
+            usage.outputTokens += u?["output_tokens"]?.int ?? 0
+            usage.cacheReadTokens += u?["cache_read_input_tokens"]?.int ?? 0
+            usage.cacheWriteTokens += u?["cache_creation_input_tokens"]?.int ?? 0
+            usage.webSearches += u?["server_tool_use"]?["web_search_requests"]?.int ?? 0
+            content += json["content"]?.array ?? []
+
+            let stop = json["stop_reason"]?.string
+            if stop == "refusal" { throw XCError.refusal(category: json["stop_details"]?["category"]?.string) }
+            if stop == "max_tokens" { throw XCError.truncated }
+            if stop == "pause_turn" {
+                // Se devuelve el turno tal cual para que el modelo continúe la búsqueda.
+                full["messages"] = .array(originalMessages + [["role": "assistant", "content": .array(content)]])
+                continue
+            }
+            await DiagLog.shared.log(.info, "claude",
+                "OK \(usage.model) in=\(usage.inputTokens) out=\(usage.outputTokens) web=\(usage.webSearches) $\(String(format: "%.4f", usage.estimatedCostUSD))")
+            return ClaudeMessage(id: json["id"]?.string ?? "", model: usage.model, stopReason: stop, content: content, usage: usage)
+        }
+        throw XCError.truncated
+    }
+
+    private func post(_ full: [String: JSONValue]) async throws -> JSONValue {
         var req = URLRequest(url: endpoint, timeoutInterval: config.timeout)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "content-type")
@@ -75,7 +106,7 @@ public actor ClaudeClient {
         let json = (try? JSONValue.decode(data)) ?? .null
 
         switch resp.statusCode {
-        case 200: break
+        case 200: return json
         case 401, 403: throw XCError.unauthorized
         case 429:
             let after = (resp.value(forHTTPHeaderField: "retry-after")).flatMap(Double.init)
@@ -86,24 +117,6 @@ public actor ClaudeClient {
             if msg.lowercased().contains("credit balance") { throw XCError.noCredits }
             throw XCError.api(status: resp.statusCode, message: msg)
         }
-
-        let stop = json["stop_reason"]?.string
-        if stop == "refusal" { throw XCError.refusal(category: json["stop_details"]?["category"]?.string) }
-        if stop == "max_tokens" { throw XCError.truncated }
-
-        let u = json["usage"]
-        let usage = TokenUsage(
-            model: json["model"]?.string ?? usedModel,
-            inputTokens: u?["input_tokens"]?.int ?? 0,
-            outputTokens: u?["output_tokens"]?.int ?? 0,
-            cacheReadTokens: u?["cache_read_input_tokens"]?.int ?? 0,
-            cacheWriteTokens: u?["cache_creation_input_tokens"]?.int ?? 0,
-            webSearches: u?["server_tool_use"]?["web_search_requests"]?.int ?? 0
-        )
-        await DiagLog.shared.log(.info, "claude",
-            "OK \(usage.model) in=\(usage.inputTokens) out=\(usage.outputTokens) web=\(usage.webSearches) $\(String(format: "%.4f", usage.estimatedCostUSD))")
-        return ClaudeMessage(id: json["id"]?.string ?? "", model: usage.model, stopReason: stop,
-                             content: json["content"]?.array ?? [], usage: usage)
     }
 
     /// Comprobación de salud barata: lista de modelos (GET, sin coste).

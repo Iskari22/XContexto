@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Cortafuegos de la página: solo puede hablar con la API de Anthropic y con Wikipedia. Nunca con X. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://api.anthropic.com https://*.wikipedia.org; frame-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Contexto verificado de un post de X y 3 borradores de respuesta con tu estilo. Nunca publica nada.">
+<meta name="theme-color" content="#0f1419" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="XContexto">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/app.css">
+<title>XContexto</title>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<header class="top">
+  <h1>XContexto</h1>
+  <nav>
+    <button id="btn-history" class="ghost" type="button" aria-label="Historial">Historial</button>
+    <button id="btn-settings" class="ghost" type="button" aria-label="Ajustes">Ajustes</button>
+  </nav>
+</header>
+
+<main>
+  <section id="onboarding" class="card notice" hidden>
+    <p><strong>Antes de empezar:</strong> añade tu clave de la API de Anthropic en <a href="#" id="open-settings-link">Ajustes</a>.
+    Se guarda solo en este navegador y va directa a api.anthropic.com.</p>
+  </section>
+
+  <form id="input-form" class="card" autocomplete="off">
+    <label for="post-input">URL o texto del post</label>
+    <textarea id="post-input" rows="4" placeholder="https://x.com/usuario/status/123… o pega aquí el texto del post"></textarea>
+    <details id="extra-fields">
+      <summary>Autor (opcional)</summary>
+      <div class="row">
+        <input id="author-input" type="text" placeholder="Nombre" aria-label="Nombre del autor">
+        <input id="handle-input" type="text" placeholder="@usuario" aria-label="Usuario del autor">
+      </div>
+    </details>
+    <div class="actions">
+      <button id="btn-paste" type="button" class="secondary">Pegar</button>
+      <button id="btn-analyze" type="submit" class="primary">Analizar</button>
+    </div>
+    <p class="hint" id="cost-hint">Cada análisis cuesta unos céntimos de tus créditos de la API.</p>
+  </form>
+
+  <section id="status" class="card status" hidden aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="status-text">Leyendo el post…</p>
+    <button id="btn-cancel" type="button" class="ghost">Cancelar</button>
+  </section>
+
+  <section id="error" class="card error" hidden role="alert">
+    <p id="error-text"></p>
+    <div class="actions" id="error-actions"></div>
+  </section>
+
+  <section id="result" hidden>
+    <article class="card post" id="post-card"></article>
+
+    <section class="card">
+      <h2>Borradores <span class="muted">(revísalos: tú decides qué publicar)</span></h2>
+      <div id="drafts"></div>
+      <div class="actions">
+        <button id="btn-regen" type="button" class="secondary">Rehacer borradores</button>
+      </div>
+    </section>
+
+    <section class="card" id="context-card"></section>
+    <p class="hint center" id="result-meta"></p>
+  </section>
+</main>
+
+<dialog id="settings" aria-labelledby="settings-title">
+  <form method="dialog" class="dialog-body" id="settings-form">
+    <header class="dialog-head">
+      <h2 id="settings-title">Ajustes</h2>
+      <button type="submit" class="ghost" value="close" aria-label="Cerrar">Cerrar</button>
+    </header>
+
+    <fieldset>
+      <legend>Clave de la API de Anthropic</legend>
+      <div class="row">
+        <input id="api-key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" aria-label="Clave de la API">
+        <button type="button" id="btn-toggle-key" class="secondary">Ver</button>
+      </div>
+      <label class="check"><input type="checkbox" id="remember-key" checked> Recordarla en este dispositivo</label>
+      <p class="hint">Créala en console.anthropic.com → API Keys. Se guarda solo en este navegador (no en ningún servidor).
+        Si desmarcas «Recordarla», se borra al cerrar la pestaña.</p>
+      <div class="actions"><button type="button" id="btn-save-key" class="primary">Guardar clave</button>
+        <button type="button" id="btn-forget-key" class="danger">Borrar clave</button></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Modelo y gasto</legend>
+      <label for="model">Modelo</label>
+      <select id="model">
+        <option value="claude-opus-5-5">Claude Opus 5.5 · mejor calidad (recomendado)</option>
+        <option value="claude-sonnet-5-5">Claude Sonnet 5.5 · más barato</option>
+      </select>
+      <label for="effort">Profundidad de la investigación</label>
+      <select id="effort">
+        <option value="low">Rápida</option>
+        <option value="medium">Normal (recomendada)</option>
+        <option value="high">A fondo</option>
+      </select>
+      <label for="limit">Límite de gasto (USD)</label>
+      <input id="limit" type="number" min="1" step="1" inputmode="decimal">
+      <p class="hint" id="spend-summary"></p>
+      <button type="button" id="btn-reset-spend" class="ghost">Poner el contador a cero</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Tu estilo</legend>
+      <label for="style-notes">Indicaciones (cómo escribes)</label>
+      <textarea id="style-notes" rows="3" placeholder="Ej.: tuteo, sin emojis, frases cortas, ironía suave, cito datos con fuente"></textarea>
+      <label for="archive-file">Importar tu archivo de X (data/tweets.js)</label>
+      <input id="archive-file" type="file" accept=".js,.json,application/javascript,application/json">
+      <p class="hint" id="style-summary"></p>
+      <label for="style-guide">Guía de estilo (opcional; p. ej. la que genera la calibración en el Mac)</label>
+      <textarea id="style-guide" rows="3"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>Fuentes</legend>
+      <label for="extra-domains">Medios adicionales de confianza (uno por línea)</label>
+      <textarea id="extra-domains" rows="2" placeholder="heraldo.es&#10;elperiodicodearagon.com"></textarea>
+      <p class="hint">La búsqueda web se limita a unas 60 fuentes reputadas (agencias, prensa de referencia, think tanks,
+        instituciones y verificadores) más las que añadas aquí. Máximo 64 en total.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Desde X</legend>
+      <p class="hint">Guarda este enlace como marcador. Abierto en un post de x.com, lo trae aquí con su texto
+        (en el iPhone: crea un marcador cualquiera, edítalo y pega este código como dirección).</p>
+      <div class="row"><input id="bookmarklet" type="text" readonly aria-label="Código del marcador">
+        <button type="button" id="btn-copy-bookmarklet" class="secondary">Copiar</button></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Datos</legend>
+      <p class="hint" id="learning-summary"></p>
+      <div class="actions wrap">
+        <button type="button" id="btn-export" class="secondary">Exportar mis datos</button>
+        <button type="button" id="btn-wipe" class="danger">Borrar todo</button>
+      </div>
+    </fieldset>
+    <p class="hint center">XContexto no puede publicar en X: solo copia el texto o abre la ventana de X para que tú pulses «Publicar».</p>
+  </form>
+</dialog>
+
+<dialog id="history" aria-labelledby="history-title">
+  <div class="dialog-body">
+    <header class="dialog-head">
+      <h2 id="history-title">Historial</h2>
+      <button type="button" class="ghost" id="btn-close-history">Cerrar</button>
+    </header>
+    <ul id="history-list" class="history"></ul>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<!--
+  Se carga SIEMPRE dentro de <iframe sandbox="allow-scripts"> (origen opaco: sin acceso a la clave ni a la página).
+  Pide el post a oEmbed de X por JSONP (solo lectura) y devuelve el HTML del post a la página principal.
+  Si cambias el script, actualiza su hash en la CSP (la prueba Web/tests/security.test.mjs lo comprueba).
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qZ4byph8Rv8oFoI9Lu4QAWqKIR6SpYMn+nxwOjy/Pjk=' https://publish.twitter.com https://publish.x.com">
+<title>oEmbed</title>
+</head>
+<body>
+<script>(function () {
+  var p = new URLSearchParams(location.hash.slice(1));
+  var url = p.get("url") || "";
+  var nonce = p.get("nonce") || "";
+  function reply(msg) { msg.nonce = nonce; parent.postMessage(msg, "*"); }
+  if (!/^https:\/\/x\.com\/\w{1,50}\/status\/\d+$/.test(url)) { reply({ ok: false }); return; }
+  var hosts = ["https://publish.twitter.com/oembed", "https://publish.x.com/oembed"];
+  var i = 0;
+  function attempt() {
+    if (i >= hosts.length) { reply({ ok: false }); return; }
+    var cb = "xcx_cb_" + i;
+    window[cb] = function (data) {
+      reply({ ok: true, html: String((data && data.html) || ""), author_name: String((data && data.author_name) || "") });
+    };
+    var s = document.createElement("script");
+    s.onerror = function () { i++; attempt(); };
+    s.src = hosts[i] + "?" + new URLSearchParams({ url: url, omit_script: "true", dnt: "true", callback: cb });
+    document.head.appendChild(s);
+  }
+  attempt();
+})();</script>
+</body>
+</html>
